@@ -1,4 +1,4 @@
-# LeedsHack2026
+# Mindmaply - LeedsHack2026
 
 ## Getting Started
 
