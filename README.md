@@ -1,5 +1,8 @@
 # Mindmaply - LeedsHack2026
 
+## Youtube video demo
+[![Watch the video](https://img.youtube.com/vi/yQ9LUPR9QZg/maxresdefault.jpg)](https://www.youtube.com/watch?v=yQ9LUPR9QZg)
+(https://www.youtube.com/watch?v=yQ9LUPR9QZg)
 ## Getting Started
 
 ### Prerequisites
