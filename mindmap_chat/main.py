@@ -6,10 +6,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import sys
-from config import config, validate_config
-from llm.gemini import GeminiClient
-from storage import JSONStorage
-from conversation import ConversationManager
+from mindmap_chat.config import config, validate_config
+from mindmap_chat.llm.gemini import GeminiClient
+from mindmap_chat.storage import JSONStorage
+from mindmap_chat.conversation import ConversationManager
 
 
 def print_help():

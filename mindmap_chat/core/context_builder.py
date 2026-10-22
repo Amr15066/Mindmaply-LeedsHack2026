@@ -4,8 +4,8 @@ Builds focused context from block data instead of dumping entire history.
 """
 
 from typing import List
-from models import Block, ConversationMessage, ConversationGraph
-from config import config
+from mindmap_chat.models import Block, ConversationMessage, ConversationGraph
+from mindmap_chat.config import config
 
 
 def format_key_points(key_points: List[str]) -> str:

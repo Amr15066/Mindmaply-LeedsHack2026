@@ -13,7 +13,7 @@ except ImportError:
     import google.generativeai as genai
 
 from .base import LLMClient
-from config import config
+from mindmap_chat.config import config
 
 
 class DeepSeekClient(LLMClient):

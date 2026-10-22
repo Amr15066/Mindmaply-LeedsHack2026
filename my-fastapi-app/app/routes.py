@@ -1,20 +1,16 @@
 from fastapi import Request, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
-import sys
 import os
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
-# Add mindmap_chat to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../mindmap_chat")))
-
 from app import app, templates
-from models import ConversationMessage, Block, Mindmap
-from storage import JSONStorage
-from conversation import ConversationManager
-from llm.gemini import GeminiClient
-from config import validate_config
+from mindmap_chat.models import ConversationMessage, Block, Mindmap
+from mindmap_chat.storage import JSONStorage
+from mindmap_chat.conversation import ConversationManager
+from mindmap_chat.llm.gemini import GeminiClient
+from mindmap_chat.config import validate_config
 
 # Initialize backends (lazy - only validate when actually needed).
 # Keep LLM and storage cached, but ALWAYS create a fresh ConversationManager

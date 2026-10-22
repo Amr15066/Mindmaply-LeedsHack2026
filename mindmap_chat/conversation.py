@@ -5,10 +5,10 @@ Ties together all modules for the core functionality.
 
 from typing import Optional
 import re
-from llm.base import LLMClient
-from llm import prompts
-from models import ConversationGraph, ConversationMessage, Block, Mindmap, BlockClassification
-from core import (
+from mindmap_chat.llm.base import LLMClient
+from mindmap_chat.llm import prompts
+from mindmap_chat.models import ConversationGraph, ConversationMessage, Block, Mindmap, BlockClassification
+from mindmap_chat.core import (
     detect_intent_shift,
     create_root_block,
     create_child_block,
@@ -17,9 +17,9 @@ from core import (
     compute_similarity,
     embed_text,
 )
-from config import config
-from storage import JSONStorage
-from utils import print_block_tree
+from mindmap_chat.config import config
+from mindmap_chat.storage import JSONStorage
+from mindmap_chat.utils import print_block_tree
 
 
 class ConversationManager:

@@ -8,10 +8,9 @@ Amr: Worked on this last year, forked to pick up the project again and fix any i
 ## Getting Started
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.10+
 - pip (Python package manager)
-- Google gemini API key (for core AI engine) - place this in a `.env` file in the `mindmap_chat` directory in the format GEMINI_API_KEY = "your_api_key_here"
-```
+- Google gemini API key (for core AI engine) - copy `mindmap_chat/.env.example` to `mindmap_chat/.env` and set `GEMINI_API_KEY`
 
 ### Setup Virtual Environment
 
@@ -26,7 +25,8 @@ python -m venv .venv
 source .venv/bin/activate
 
 # Install dependencies
-pip install -r my-fastapi-app/requirements.txt
+# Install the package (editable) and its dependencies
+pip install -r requirements.txt   # equivalent to: pip install -e .
 ```
 
 ## Running the App
@@ -66,13 +66,13 @@ LeedsHack2026/
 │   ├── conversation.py     # Conversation orchestration	
 │   ├── main.py             # CLI Entry point
 │   ├── models.py           # Graph & Block data structures
-│   ├── storage.py          # Persistence logic
-│   └── requirements.txt    # Backend dependencies
+│   └── storage/            # Persistence logic
 ├── my-fastapi-app/         # FastAPI Web Interface
 │   ├── app/                # API endpoints & initialization
 │   ├── static/             # CSS & D3.js visualization logic
-│   ├── templates/          # HTML templates
-│   └── requirements.txt    # Web dependencies
+│   └── templates/          # HTML templates
+├── pyproject.toml          # Package metadata & dependencies
+├── requirements.txt        # `-e .` (installs the package)
 ├── launch-fastapi.ps1      # Launcher (Windows)
 ├── launch-fastapi.sh       # Launcher (Bash)
 └── README.md

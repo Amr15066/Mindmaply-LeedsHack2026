@@ -9,7 +9,7 @@ import os
 import tempfile
 from pathlib import Path
 from threading import Lock
-from models import ConversationGraph, Mindmap
+from mindmap_chat.models import ConversationGraph, Mindmap
 
 
 class JSONStorage:

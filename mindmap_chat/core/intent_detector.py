@@ -5,11 +5,11 @@ Determines if new message continues, deepens, or diverges from current block.
 
 from typing import Optional
 import json
-from llm.base import LLMClient
-from llm import prompts
-from models import Block, BlockClassification, ConversationMessage
-from core.embeddings import compute_similarity, embed_text
-from config import config
+from mindmap_chat.llm.base import LLMClient
+from mindmap_chat.llm import prompts
+from mindmap_chat.models import Block, BlockClassification, ConversationMessage
+from mindmap_chat.core.embeddings import compute_similarity, embed_text
+from mindmap_chat.config import config
 
 
 def detect_intent_shift(llm_client: LLMClient, current_block: Block, 

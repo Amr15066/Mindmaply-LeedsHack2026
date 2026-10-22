@@ -3,7 +3,7 @@ Utility functions.
 """
 
 from typing import List
-from models import Block, ConversationGraph
+from mindmap_chat.models import Block, ConversationGraph
 
 
 def print_block_tree(graph: ConversationGraph, block_id: str = None, indent: int = 0) -> None:

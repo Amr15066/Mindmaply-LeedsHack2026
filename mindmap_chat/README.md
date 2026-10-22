@@ -21,8 +21,10 @@ When users learn via chat with LLMs:
 
 ### 1. Setup
 
+From the repository root:
+
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ### 2. Get Gemini API Key
@@ -34,14 +36,14 @@ pip install -r requirements.txt
 ### 3. Create `.env` file
 
 ```bash
-cp .env.example .env
-# Edit .env and add your API key
+cp mindmap_chat/.env.example mindmap_chat/.env
+# Edit mindmap_chat/.env and add your API key
 ```
 
 ### 4. Run
 
 ```bash
-python main.py
+mindmap-chat            # or: python -m mindmap_chat.main
 ```
 
 ### 5. Try it

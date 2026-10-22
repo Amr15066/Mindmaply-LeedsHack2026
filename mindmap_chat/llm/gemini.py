@@ -11,7 +11,7 @@ except ImportError:
 from typing import Any, Dict
 import json
 from .base import LLMClient
-from config import config
+from mindmap_chat.config import config
 
 
 class GeminiClient(LLMClient):

@@ -4,7 +4,7 @@ Uses the configured LLM client for embeddings.
 """
 
 from typing import List
-from llm.base import LLMClient
+from mindmap_chat.llm.base import LLMClient
 
 
 def compute_similarity(embedding1: List[float], embedding2: List[float]) -> float:
