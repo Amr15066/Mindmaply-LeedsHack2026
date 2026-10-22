@@ -3,10 +3,9 @@ Block lifecycle management.
 Creating, updating, and summarizing blocks.
 """
 
-from typing import Optional
 from mindmap_chat.llm.base import LLMClient
 from mindmap_chat.llm import prompts
-from mindmap_chat.models import Block, ConversationGraph, ConversationMessage
+from mindmap_chat.models import Block, ConversationGraph
 from mindmap_chat.core.embeddings import embed_text
 from mindmap_chat.core.context_builder import construct_summary_prompt_context
 from mindmap_chat.config import config

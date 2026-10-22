@@ -3,7 +3,6 @@ Intent shift detection.
 Determines if new message continues, deepens, or diverges from current block.
 """
 
-from typing import Optional
 import json
 from mindmap_chat.llm.base import LLMClient
 from mindmap_chat.llm import prompts

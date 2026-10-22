@@ -21,7 +21,7 @@ def compute_similarity(embedding1: List[float], embedding2: List[float]) -> floa
     if not embedding1 or not embedding2:
         return 0.0
     
-    dot_product = sum(a * b for a, b in zip(embedding1, embedding2))
+    dot_product = sum(a * b for a, b in zip(embedding1, embedding2, strict=False))
     magnitude1 = sum(a * a for a in embedding1) ** 0.5
     magnitude2 = sum(b * b for b in embedding2) ** 0.5
     

@@ -23,4 +23,4 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates = Jinja2Templates(directory=template_dir)
 
 # Import routes after app is created to avoid circular imports
-from app import routes
+from app import routes  # noqa: E402, F401  (registers the endpoints)

@@ -8,8 +8,6 @@ except ImportError:
     # Fallback to new package if old one not available
     import google.genai as genai
 
-from typing import Any, Dict
-import json
 from .base import LLMClient
 from mindmap_chat.config import config
 

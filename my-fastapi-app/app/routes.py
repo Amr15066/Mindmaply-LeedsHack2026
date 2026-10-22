@@ -1,12 +1,9 @@
 from fastapi import Request, HTTPException, BackgroundTasks
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-import os
-from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
 
 from app import app, templates
-from mindmap_chat.models import ConversationMessage, Block, Mindmap
 from mindmap_chat.storage import JSONStorage
 from mindmap_chat.conversation import ConversationManager
 from mindmap_chat.llm.gemini import GeminiClient
@@ -300,9 +297,9 @@ async def add_message_to_block(block_id: str, payload: MessageRequest, backgroun
     
     # Use manager to continue conversation
     try:
-        response_text = mgr.continue_conversation(payload.content)
+        mgr.continue_conversation(payload.content)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"LLM error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"LLM error: {str(e)}") from e
     
     # Save updated graph
     get_storage().save(mindmap)
@@ -378,7 +375,7 @@ async def delete_block(block_id: str):
     try:
         mgr.delete_block(block_id)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # Reload updated mindmap after deletion
     mindmap = get_storage().load()

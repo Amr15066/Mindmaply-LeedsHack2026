@@ -4,8 +4,6 @@ Uses DeepSeek for generation (answering) but Gemini for embeddings (cheap).
 """
 
 import requests
-import json
-from typing import Any, Dict
 
 try:
     import google.genai as genai
@@ -64,7 +62,7 @@ class DeepSeekClient(LLMClient):
             data = response.json()
             return data["choices"][0]["message"]["content"]
         except Exception as e:
-            raise Exception(f"DeepSeek API error: {e}")
+            raise Exception(f"DeepSeek API error: {e}") from e
 
     def embed(self, text: str) -> list[float]:
         """

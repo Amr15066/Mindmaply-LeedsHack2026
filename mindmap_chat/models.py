@@ -6,7 +6,6 @@ These are JSON-serializable and represent the conversation graph.
 from dataclasses import dataclass, field, asdict
 from typing import List, Optional, Dict, Any
 import uuid
-import json
 from datetime import datetime
 
 

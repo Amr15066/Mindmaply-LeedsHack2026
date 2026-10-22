@@ -169,12 +169,12 @@ def main():
                         
                         confirm = input(f"\nDelete graph '{graph_title}'? This cannot be undone. (y/n): ").strip().lower()
                         if confirm == 'y':
-                            print(f"[DEBUG] User confirmed deletion")
+                            print("[DEBUG] User confirmed deletion")
                             manager.delete_graph(graph_id)
                             print(f"[OK] Deleted graph: {graph_id}")
                         else:
                             print("[CANCELLED]")
-                    except IndexError as ie:
+                    except IndexError:
                         print("Usage: /delete-graph <graph_id>")
                         print("Use /graphs to see available graph IDs")
                     except ValueError as ve:

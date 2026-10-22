@@ -7,7 +7,7 @@ from typing import Optional
 import re
 from mindmap_chat.llm.base import LLMClient
 from mindmap_chat.llm import prompts
-from mindmap_chat.models import ConversationGraph, ConversationMessage, Block, Mindmap, BlockClassification
+from mindmap_chat.models import ConversationGraph, ConversationMessage, Block, BlockClassification
 from mindmap_chat.core import (
     detect_intent_shift,
     create_root_block,
@@ -101,7 +101,7 @@ class ConversationManager:
         block_messages = self.graph.get_block_messages(current_block.block_id)
         
         # Detect intent shift
-        print(f"\n[Analyzing intent...]")
+        print("\n[Analyzing intent...]")
         classification = detect_intent_shift(
             self.llm,
             current_block,
@@ -314,7 +314,7 @@ class ConversationManager:
         user_embedding = embed_text(self.llm, user_message)
         best_match: Optional[tuple[ConversationGraph, Block, float]] = None
 
-        for graph_id, graph in self.mindmap.graphs.items():
+        for graph in self.mindmap.graphs.values():
             for block in graph.blocks.values():
                 if not block.intent:
                     continue
