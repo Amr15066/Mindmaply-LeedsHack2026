@@ -1,5 +1,7 @@
 # Mindmaply - LeedsHack2026
 
+Amr: Worked on this last year, forked to pick up the project again and fix any issues we didn't have time to improve on last year.
+
 ## Youtube video demo
 [![Watch the video](https://img.youtube.com/vi/yQ9LUPR9QZg/maxresdefault.jpg)](https://www.youtube.com/watch?v=yQ9LUPR9QZg)
 (https://www.youtube.com/watch?v=yQ9LUPR9QZg)
