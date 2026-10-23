@@ -54,28 +54,11 @@ class ConversationManager:
         self.graph.add_block(root_block)
         self.graph.current_block_id = root_block.block_id
         self.mindmap.add_graph(self.graph)
-        
-        # Store user message
-        user_msg = ConversationMessage(
-            block_id=root_block.block_id,
-            role="user",
-            content=user_message,
-        )
-        self.graph.add_message(user_msg)
-        root_block.add_message_ref(user_msg.message_id)
-        
-        # Get response
+
+        # Get response, then store the exchange
         response = self._get_response_in_block(root_block, user_message)
-        
-        # Store assistant response
-        assistant_msg = ConversationMessage(
-            block_id=root_block.block_id,
-            role="assistant",
-            content=response,
-        )
-        self.graph.add_message(assistant_msg)
-        root_block.add_message_ref(assistant_msg.message_id)
-        
+        self._record_exchange(root_block, user_message, response)
+
         # Save
         self.storage.save(self.mindmap)
         
@@ -184,27 +167,10 @@ class ConversationManager:
             # Fallback
             target_block = current_block
         
-        # Store user message
-        user_msg = ConversationMessage(
-            block_id=target_block.block_id,
-            role="user",
-            content=user_message,
-        )
-        self.graph.add_message(user_msg)
-        target_block.add_message_ref(user_msg.message_id)
-        
-        # Get response
+        # Get response, then store the exchange
         response = self._get_response_in_block(target_block, user_message)
-        
-        # Store assistant response
-        assistant_msg = ConversationMessage(
-            block_id=target_block.block_id,
-            role="assistant",
-            content=response,
-        )
-        self.graph.add_message(assistant_msg)
-        target_block.add_message_ref(assistant_msg.message_id)
-        
+        self._record_exchange(target_block, user_message, response)
+
         # Auto-summarize if needed
         maybe_auto_summarize(self.llm, self.graph, target_block)
         
@@ -224,23 +190,19 @@ class ConversationManager:
         Returns:
             Assistant response
         """
-        # Construct block-scoped context
+        # Block-scoped context (title, intent, summary, key points, open
+        # questions, recent history). Built before the new message is stored,
+        # so the message appears in the prompt exactly once.
         context = construct_block_context(self.graph, block)
-        
-        # Build full prompt
-        prompt = context + f"\nUSER: {user_message}\n\nASSISTANT:"
-        prompt = prompts.prompt_answer_in_block_context(
-            block.title,
-            block.intent,
-            block.summary or "(discussion just started)",
-            "\n".join(f"- {kp}" for kp in block.key_points) if block.key_points else "(none yet)",
-            "\n".join(f"- {oq}" for oq in block.open_questions) if block.open_questions else "(none yet)",
-            construct_block_context(self.graph, block),
-            user_message
-        )
-        
-        response = self.llm.call(prompt)
-        return response
+        prompt = prompts.prompt_answer_in_block_context(context, block.intent, user_message)
+        return self.llm.call(prompt)
+
+    def _record_exchange(self, block: Block, user_message: str, response: str) -> None:
+        """Store a user message and the assistant's response in a block."""
+        for role, content in (("user", user_message), ("assistant", response)):
+            message = ConversationMessage(block_id=block.block_id, role=role, content=content)
+            self.graph.add_message(message)
+            block.add_message_ref(message.message_id)
 
     def _resolve_deepen_blocks(
         self,

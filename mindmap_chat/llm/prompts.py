@@ -86,26 +86,15 @@ Respond ONLY with valid JSON (no markdown):
 }}"""
 
 
-def prompt_answer_in_block_context(block_title: str, block_intent: str, block_summary: str,
-                                   key_points: str, open_questions: str, 
-                                   recent_messages: str, new_user_msg: str) -> str:
-    """Prompt D: Answer while maintaining block context and scope."""
+def prompt_answer_in_block_context(block_context: str, block_intent: str,
+                                   new_user_msg: str) -> str:
+    """
+    Prompt D: Answer while maintaining block context and scope.
+
+    ``block_context`` comes from ``core.context_builder.construct_block_context``.
+    """
     return f"""You are having a focused discussion with the user within a specific topic.
-
-BLOCK CONTEXT:
-Title: {block_title}
-Intent: {block_intent}
-Summary so far: {block_summary}
-
-KEY POINTS COVERED:
-{key_points}
-
-OPEN QUESTIONS FROM THIS DISCUSSION:
-{open_questions}
-
-CONVERSATION HISTORY (in this block):
-{recent_messages}
-
+{block_context}
 USER'S NEW MESSAGE:
 {new_user_msg}
 

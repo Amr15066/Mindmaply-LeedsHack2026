@@ -66,7 +66,7 @@ def construct_block_context(graph: ConversationGraph, block: Block,
 BLOCK CONTEXT:
 Title: {block.title}
 Intent: {block.intent}
-Summary: {block.summary}
+Summary so far: {block.summary or "(discussion just started)"}
 
 KEY POINTS COVERED:
 {key_points_str}
