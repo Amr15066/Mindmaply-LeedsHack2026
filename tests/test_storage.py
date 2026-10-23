@@ -38,6 +38,32 @@ def test_load_rebuilds_children_from_parent_ids(tmp_path):
     assert a.block_id in loaded.blocks[root.block_id].children
 
 
+def test_legacy_single_graph_file_is_migrated(tmp_path):
+    """Regression: the pre-Mindmap format (one bare graph) used to crash load()."""
+    path = tmp_path / "conv.json"
+    graph, root, a, *_ = make_tree()
+    add_message(graph, a)
+    data = graph.to_dict()
+    for block in data["blocks"].values():
+        block["children"] = []
+    path.write_text(json.dumps(data))
+
+    mindmap = JSONStorage(str(path)).load()
+    assert list(mindmap.graphs) == [graph.graph_id]
+    assert mindmap.current_graph_id == graph.graph_id
+    loaded = mindmap.graphs[graph.graph_id]
+    assert loaded.root_block_id == root.block_id
+    assert a.block_id in loaded.blocks[root.block_id].children
+    assert len(loaded.messages) == 1
+
+
+def test_unrecognised_document_loads_empty_mindmap(tmp_path):
+    """Regression: UnboundLocalError when the JSON has no "graphs" key."""
+    path = tmp_path / "conv.json"
+    path.write_text("{}")
+    assert JSONStorage(str(path)).load().graphs == {}
+
+
 def test_corrupted_file_loads_empty_mindmap(tmp_path):
     path = tmp_path / "conv.json"
     path.write_text("{ not json")

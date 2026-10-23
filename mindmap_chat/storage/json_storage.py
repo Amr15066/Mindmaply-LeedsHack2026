@@ -74,16 +74,19 @@ class JSONStorage:
                 print(f"[ERROR] Corrupted JSON in {self.file_path}, returning empty mindmap")
                 return Mindmap()
             
-            if "graphs" in data:
-                mindmap = Mindmap.from_dict(data)
-            for graph in mindmap.graphs.values():
-                graph.rebuild_children()
-            return mindmap
+        if "graphs" in data:
+            mindmap = Mindmap.from_dict(data)
+        elif "blocks" in data:
+            # Legacy format: the file holds a single ConversationGraph
+            graph = ConversationGraph.from_dict(data)
+            mindmap = Mindmap()
+            mindmap.add_graph(graph)
+        else:
+            print(f"[ERROR] Unrecognised document in {self.file_path}, returning empty mindmap")
+            return Mindmap()
 
-        graph = ConversationGraph.from_dict(data)
-        graph.rebuild_children()
-        mindmap = Mindmap()
-        mindmap.add_graph(graph)
+        for graph in mindmap.graphs.values():
+            graph.rebuild_children()
         return mindmap
 
     def clear(self) -> None:
