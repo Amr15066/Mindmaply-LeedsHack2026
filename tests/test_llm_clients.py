@@ -96,11 +96,27 @@ class TestGeminiClient:
     def test_embed(self, fake_models):
         assert gemini.GeminiClient().embed("text") == [0.1, 0.2, 0.3]
         assert fake_models.embed_calls[0].model == gemini.config.embeddings.model
-        assert fake_models.embed_calls[0].contents == "text"
+        assert fake_models.embed_calls[0].contents == ["text"]
         assert (
             fake_models.embed_calls[0].config.output_dimensionality
             == gemini.config.embeddings.embedding_dim
         )
+
+    def test_embed_batch_is_one_request(self, fake_models):
+        fake_models.next_embedding = types.EmbedContentResponse(
+            embeddings=[types.ContentEmbedding(values=[1.0]), types.ContentEmbedding(values=[2.0])]
+        )
+        assert gemini.GeminiClient().embed_batch(["a", "b"]) == [[1.0], [2.0]]
+        assert len(fake_models.embed_calls) == 1
+        assert fake_models.embed_calls[0].contents == ["a", "b"]
+
+    def test_embed_batch_count_mismatch_raises(self, fake_models):
+        with pytest.raises(LLMResponseError):
+            gemini.GeminiClient().embed_batch(["a", "b"])  # stub returns one embedding
+
+    def test_embed_batch_of_nothing_makes_no_request(self, fake_models):
+        assert gemini.GeminiClient().embed_batch([]) == []
+        assert fake_models.embed_calls == []
 
     def test_empty_embedding_raises(self, fake_models):
         fake_models.next_embedding = types.EmbedContentResponse(embeddings=[])

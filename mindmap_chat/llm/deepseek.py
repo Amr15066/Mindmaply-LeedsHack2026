@@ -81,3 +81,7 @@ class DeepSeekClient(LLMClient):
             Embedding vector
         """
         return self._embedder.embed(text)
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        """Embed several texts in a single Gemini request."""
+        return self._embedder.embed_batch(texts)

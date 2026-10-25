@@ -71,13 +71,22 @@ class GeminiClient(LLMClient):
         Returns:
             Embedding vector
         """
+        return self.embed_batch([text])[0]
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        """Embed several texts in a single request."""
+        if not texts:
+            return []
         result = self.client.models.embed_content(
             model=self.embedding_model,
-            contents=text,
+            contents=texts,
             config=types.EmbedContentConfig(
                 output_dimensionality=config.embeddings.embedding_dim
             ),
         )
-        if not result.embeddings or not result.embeddings[0].values:
-            raise LLMResponseError("Gemini returned no embedding")
-        return list(result.embeddings[0].values)
+        embeddings = result.embeddings or []
+        if len(embeddings) != len(texts) or not all(e.values for e in embeddings):
+            raise LLMResponseError(
+                f"Gemini returned {len(embeddings)} embeddings for {len(texts)} texts"
+            )
+        return [list(e.values) for e in embeddings]

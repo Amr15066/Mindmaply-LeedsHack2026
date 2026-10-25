@@ -45,6 +45,8 @@ class Block:
     relation: str = "child"
     relation_confidence: float = 0.0
     relation_reasoning: str = ""
+    # len(conversation_refs) when the block was last summarized
+    last_summarized_at: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

@@ -4,6 +4,8 @@ Determines if new message continues, deepens, or diverges from current block.
 """
 
 import json
+from typing import List, Optional
+
 from mindmap_chat.llm.base import LLMClient
 from mindmap_chat.llm import prompts
 from mindmap_chat.models import Block, BlockClassification, ConversationMessage
@@ -11,25 +13,29 @@ from mindmap_chat.core.embeddings import compute_similarity, embed_text
 from mindmap_chat.config import config
 
 
-def detect_intent_shift(llm_client: LLMClient, current_block: Block, 
-                       new_user_msg: str, last_messages: list[ConversationMessage]) -> BlockClassification:
+def detect_intent_shift(llm_client: LLMClient, current_block: Block,
+                       new_user_msg: str, last_messages: list[ConversationMessage],
+                       new_msg_embedding: Optional[List[float]] = None) -> BlockClassification:
     """
     Detect if the new message represents an intent shift.
-    
+
     Uses embedding similarity first (fast), then LLM classification if ambiguous.
-    
+
     Args:
         llm_client: LLM client for embeddings and classification
         current_block: The current block
         new_user_msg: The new user message
         last_messages: Recent messages (for context)
-        
+        new_msg_embedding: Embedding of ``new_user_msg`` if the caller already
+            has it (avoids embedding the same text twice in one turn)
+
     Returns:
         BlockClassification with action and reasoning
     """
-    
+
     # Step 1: Embed the new message
-    new_msg_embedding = embed_text(llm_client, new_user_msg)
+    if new_msg_embedding is None:
+        new_msg_embedding = embed_text(llm_client, new_user_msg)
     
     # Step 2: Compare similarity to current block intent
     intent_similarity = compute_similarity(new_msg_embedding, current_block.embedding)

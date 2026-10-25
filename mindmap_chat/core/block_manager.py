@@ -74,16 +74,19 @@ def create_child_block(llm_client: LLMClient, parent_block: Block,
     return block
 
 
-def summarize_block(llm_client: LLMClient, graph: ConversationGraph, 
-                   block: Block) -> None:
+def summarize_block(llm_client: LLMClient, graph: ConversationGraph,
+                   block: Block) -> bool:
     """
     Auto-summarize a block using LLM.
     Updates block in-place with summary, key_points, open_questions.
-    
+
     Args:
         llm_client: LLM client
         graph: Conversation graph
         block: Block to summarize
+
+    Returns:
+        True if the block was summarized
     """
     # Get context for summarization
     context = construct_summary_prompt_context(graph, block)
@@ -103,26 +106,32 @@ def summarize_block(llm_client: LLMClient, graph: ConversationGraph,
         new_title = response.get("title_suggestion")
         if new_title:
             block.title = new_title
-        
+
+        block.last_summarized_at = len(block.conversation_refs)
         print(f"[OK] Block '{block.title}' summarized")
-    
+        return True
+
     except Exception as e:
         print(f"Error summarizing block: {e}")
+        return False
 
 
-def maybe_auto_summarize(llm_client: LLMClient, graph: ConversationGraph, 
+def maybe_auto_summarize(llm_client: LLMClient, graph: ConversationGraph,
                         block: Block) -> None:
     """
-    Automatically summarize block if it has enough messages.
-    
+    Re-summarize a block every N new messages (N = auto_summarize_after_n_messages).
+
+    Summarizing only once would freeze the summary while the answer context
+    (summary + last few messages) silently loses everything in between.
+
     Args:
         llm_client: LLM client
         graph: Conversation graph
         block: Block to check
     """
     message_count = len(block.conversation_refs)
-    threshold = config.auto_summarize_after_n_messages
-    
-    if message_count >= threshold and not block.summary:
-        print(f"Auto-summarizing block (reached {message_count} messages)...")
+    new_messages = message_count - block.last_summarized_at
+
+    if new_messages >= config.auto_summarize_after_n_messages:
+        print(f"Auto-summarizing block ({new_messages} new messages, {message_count} total)...")
         summarize_block(llm_client, graph, block)

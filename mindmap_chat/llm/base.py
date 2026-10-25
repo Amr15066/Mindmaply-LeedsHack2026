@@ -4,7 +4,7 @@ Allows easy swapping of different LLM providers.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import json
 
 # Appended to free-text answers that hit the output-token limit, so a cut-off
@@ -45,6 +45,13 @@ class LLMClient(ABC):
             Embedding vector
         """
         pass
+
+    def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        """
+        Embed several texts. Override with a single batched request where the
+        provider supports one; this default makes one call per text.
+        """
+        return [self.embed(text) for text in texts]
 
     def call_json(self, prompt: str) -> Dict[str, Any]:
         """

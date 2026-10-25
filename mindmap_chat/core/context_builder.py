@@ -130,20 +130,14 @@ CONVERSATION HISTORY (last {len(recent_messages)} messages):
 
 def construct_summary_prompt_context(graph: ConversationGraph, block: Block) -> str:
     """
-    Construct context for summarizing a block.
-    Includes all messages for that block.
-    
+    Construct context for summarizing a block: all of its messages, formatted
+    as turns. The summary prompt adds the block intent and section headers.
+
     Args:
         graph: The conversation graph
         block: The block to summarize
-        
-    Returns:
-        Formatted context string
-    """
-    block_messages = graph.get_block_messages(block.block_id)
-    messages_str = format_conversation_turns(block_messages)
-    
-    return f"""BLOCK INTENT: {block.intent}
 
-MESSAGES IN THIS BLOCK:
-{messages_str}"""
+    Returns:
+        Formatted conversation turns
+    """
+    return format_conversation_turns(graph.get_block_messages(block.block_id))

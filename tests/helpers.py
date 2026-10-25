@@ -63,6 +63,7 @@ class FakeLLMClient(LLMClient):
         self.embeddings: Dict[str, List[float]] = {}
         self.prompts: List[str] = []
         self.embedded: List[str] = []
+        self.batches: List[List[str]] = []
 
     def call(self, prompt: str, json_mode: bool = False) -> str:
         self.prompts.append(prompt)
@@ -83,6 +84,10 @@ class FakeLLMClient(LLMClient):
         if text in self.embeddings:
             return list(self.embeddings[text])
         return unit_vector(text)
+
+    def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        self.batches.append(list(texts))
+        return [self.embed(text) for text in texts]
 
     def prompts_of(self, marker: str) -> List[str]:
         return [p for p in self.prompts if marker in p]

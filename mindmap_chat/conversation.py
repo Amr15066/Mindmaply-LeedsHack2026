@@ -5,6 +5,9 @@ Ties together all modules for the core functionality.
 
 from typing import Optional
 import re
+
+import numpy as np
+
 from mindmap_chat.llm.base import LLMClient
 from mindmap_chat.llm import prompts
 from mindmap_chat.models import ConversationGraph, ConversationMessage, Block, BlockClassification
@@ -14,9 +17,9 @@ from mindmap_chat.core import (
     create_child_block,
     maybe_auto_summarize,
     construct_block_context,
-    compute_similarity,
     embed_text,
 )
+from mindmap_chat.core.embeddings import cosine_batch
 from mindmap_chat.config import config
 from mindmap_chat.storage import JSONStorage
 from mindmap_chat.utils import print_block_tree
@@ -85,11 +88,14 @@ class ConversationManager:
         
         # Detect intent shift
         print("\n[Analyzing intent...]")
+        # Embed the message once; reused by every similarity check this turn
+        message_embedding = embed_text(self.llm, user_message)
         classification = detect_intent_shift(
             self.llm,
             current_block,
             user_message,
-            block_messages
+            block_messages,
+            new_msg_embedding=message_embedding,
         )
         
         print(f"  [ACTION] {classification.action} (confidence: {classification.confidence:.2f})")
@@ -114,7 +120,7 @@ class ConversationManager:
             self.graph.current_block_id = target_block.block_id
 
         elif classification.action == "tangent":
-            matched = self._find_matching_block_in_other_graphs(user_message)
+            matched = self._find_matching_block_in_other_graphs(message_embedding)
             if matched:
                 matched_graph, matched_block, similarity = matched
                 if similarity >= config.thresholds.continue_threshold:
@@ -297,26 +303,49 @@ class ConversationManager:
    
     def _find_matching_block_in_other_graphs(
         self,
-        user_message: str,
+        message_embedding: list[float],
     ) -> Optional[tuple[ConversationGraph, Block, float]]:
+        """
+        Find the block (in any graph) whose intent best matches the message.
+
+        Blocks missing an embedding are backfilled in one batched request first,
+        so the scan itself never makes network calls.
+
+        Returns:
+            (graph, block, similarity) if the best match reaches sibling_threshold
+        """
         if not self.graph:
             return None
 
-        user_embedding = embed_text(self.llm, user_message)
-        best_match: Optional[tuple[ConversationGraph, Block, float]] = None
+        candidates = [
+            (graph, block)
+            for graph in self.mindmap.graphs.values()
+            for block in graph.blocks.values()
+            if block.intent
+        ]
+        missing = [block for _, block in candidates if not block.embedding]
+        if missing:
+            vectors = self.llm.embed_batch([block.intent for block in missing])
+            for block, vector in zip(missing, vectors, strict=True):
+                block.embedding = vector
 
-        for graph in self.mindmap.graphs.values():
-            for block in graph.blocks.values():
-                if not block.intent:
-                    continue
-                if not block.embedding:
-                    block.embedding = embed_text(self.llm, block.intent)
-                similarity = compute_similarity(user_embedding, block.embedding)
-                if best_match is None or similarity > best_match[2]:
-                    best_match = (graph, block, similarity)
+        # Only compare like with like (embeddings from another model/dimension are skipped)
+        comparable = [
+            (graph, block)
+            for graph, block in candidates
+            if len(block.embedding) == len(message_embedding)
+        ]
+        if not comparable:
+            return None
 
-        if best_match and best_match[2] >= config.thresholds.sibling_threshold:
-            return best_match
+        matrix = np.array([block.embedding for _, block in comparable], dtype=np.float64)
+        similarities = cosine_batch(message_embedding, matrix)
+        best = int(np.argmax(similarities))
+        best_graph, best_block = comparable[best]
+        best_similarity = float(similarities[best])
+
+        if best_similarity >= config.thresholds.sibling_threshold:
+            return best_graph, best_block, best_similarity
 
         return None
     
