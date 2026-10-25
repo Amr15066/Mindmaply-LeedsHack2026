@@ -8,7 +8,7 @@ from mindmap_chat.storage import JSONStorage
 from mindmap_chat.conversation import ConversationManager
 from mindmap_chat.llm.base import LLMResponseError
 from mindmap_chat.llm.gemini import GeminiClient
-from mindmap_chat.config import validate_config
+from mindmap_chat.config import config, validate_config
 
 # Initialize backends (lazy - only validate when actually needed).
 # Keep LLM and storage cached, but ALWAYS create a fresh ConversationManager
@@ -20,11 +20,7 @@ def get_storage():
     """Lazy initialize storage."""
     global storage
     if storage is None:
-        # Use absolute path relative to the repo root
-        import os
-        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-        data_file = os.path.join(repo_root, "mindmap_chat", "data", "conversation.json")
-        storage = JSONStorage(data_file)
+        storage = JSONStorage(config.storage_path)
     return storage
 
 def get_llm_client():

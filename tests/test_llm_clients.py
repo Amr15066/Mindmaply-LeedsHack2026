@@ -97,6 +97,10 @@ class TestGeminiClient:
         assert gemini.GeminiClient().embed("text") == [0.1, 0.2, 0.3]
         assert fake_models.embed_calls[0].model == gemini.config.embeddings.model
         assert fake_models.embed_calls[0].contents == "text"
+        assert (
+            fake_models.embed_calls[0].config.output_dimensionality
+            == gemini.config.embeddings.embedding_dim
+        )
 
     def test_empty_embedding_raises(self, fake_models):
         fake_models.next_embedding = types.EmbedContentResponse(embeddings=[])

@@ -13,12 +13,20 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
+DEFAULT_STORAGE_PATH = str(Path(__file__).parent / "data" / "conversation.json")
+
+
+def _env(name: str, default: str = ""):
+    """Read an environment variable when the config object is created, not at import."""
+    return field(default_factory=lambda: os.getenv(name, default))
+
 
 @dataclass
 class GeminiConfig:
     """Gemini API configuration."""
-    api_key: str = os.getenv("GEMINI_API_KEY", "")
-    model_name: str = "gemini-3-flash-preview"  # Fast and generous free tier
+    api_key: str = _env("GEMINI_API_KEY")
+    # Preview aliases can be retired without notice; override with GEMINI_MODEL.
+    model_name: str = _env("GEMINI_MODEL", "gemini-3-flash-preview")
     temperature: float = 0.7
     max_output_tokens: int = 1024
 
@@ -26,8 +34,8 @@ class GeminiConfig:
 @dataclass
 class DeepSeekConfig:
     """DeepSeek API configuration (optional alternative generator)."""
-    api_key: str = os.getenv("DEEPSEEK_API_KEY", "")
-    model_name: str = "deepseek-chat"
+    api_key: str = _env("DEEPSEEK_API_KEY")
+    model_name: str = _env("DEEPSEEK_MODEL", "deepseek-chat")
     temperature: float = 0.7
     max_output_tokens: int = 1024
 
@@ -35,18 +43,20 @@ class DeepSeekConfig:
 @dataclass
 class EmbeddingConfig:
     """Embedding model configuration."""
-    model: str = "gemini-embedding-001"  # Free, local, lightweight
-    embedding_dim: int = 384
+    model: str = "gemini-embedding-001"  # Hosted Gemini API model
+    embedding_dim: int = 3072  # Model default; also supports 1536 / 768 (Matryoshka)
 
 
 @dataclass
 class DetectionThresholds:
     """Thresholds for intent detection."""
+    # similarity >= continue_threshold          -> CONTINUE (no LLM call)
+    # similarity >= deepen_threshold            -> DEEPEN   (no LLM call)
+    # otherwise                                 -> ask the LLM classifier
     continue_threshold: float = 0.90  # Same topic
     deepen_threshold: float = 0.70  # Deeper dive
-    sibling_threshold: float = 0.75  # Related subtopic
-    related_match_threshold: float = 0.60  # Looser match for related blocks
-    tangent_threshold: float = 0.65  # Unrelated
+    # On TANGENT, the best block in any graph must reach this to be reused
+    sibling_threshold: float = 0.75
 
 
 @dataclass
@@ -57,7 +67,8 @@ class AppConfig:
     embeddings: EmbeddingConfig = field(default_factory=EmbeddingConfig)
     thresholds: DetectionThresholds = field(default_factory=DetectionThresholds)
     auto_summarize_after_n_messages: int = 6
-    storage_path: str = "./data/conversation.json"
+    # Shared by the CLI and the web app; override with MINDMAP_STORAGE_PATH.
+    storage_path: str = _env("MINDMAP_STORAGE_PATH", DEFAULT_STORAGE_PATH)
     context_window_size: int = 3  # Last N messages to include in context
 
 

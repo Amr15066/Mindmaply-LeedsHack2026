@@ -71,7 +71,13 @@ class GeminiClient(LLMClient):
         Returns:
             Embedding vector
         """
-        result = self.client.models.embed_content(model=self.embedding_model, contents=text)
+        result = self.client.models.embed_content(
+            model=self.embedding_model,
+            contents=text,
+            config=types.EmbedContentConfig(
+                output_dimensionality=config.embeddings.embedding_dim
+            ),
+        )
         if not result.embeddings or not result.embeddings[0].values:
             raise LLMResponseError("Gemini returned no embedding")
         return list(result.embeddings[0].values)

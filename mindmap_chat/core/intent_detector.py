@@ -53,15 +53,8 @@ def detect_intent_shift(llm_client: LLMClient, current_block: Block,
             reasoning=f"Message deepens the current topic (similarity: {intent_similarity:.2f})"
         )
     
-    elif intent_similarity < thresholds.tangent_threshold:
-        # Low similarity: likely tangent or new topic
-        # Ask LLM for confirmation
-        return _classify_with_llm(
-            llm_client, current_block, new_user_msg, last_messages
-        )
-    
     else:
-        # Medium similarity: ambiguous, ask LLM
+        # Below the deepen threshold: ambiguous or a topic shift, ask the LLM
         return _classify_with_llm(
             llm_client, current_block, new_user_msg, last_messages
         )
