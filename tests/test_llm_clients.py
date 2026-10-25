@@ -84,10 +84,12 @@ class TestGeminiClient:
         with pytest.raises(LLMResponseError, match="SAFETY"):
             gemini.GeminiClient().call("p")
 
-    def test_truncated_answer_is_marked(self, fake_models):
+    def test_truncated_answer_is_marked(self, fake_models, caplog):
         """Regression (§4.6): MAX_TOKENS answers were presented as complete."""
         fake_models.next_response = text_response("half an ans", types.FinishReason.MAX_TOKENS)
         assert gemini.GeminiClient().call("p") == "half an ans" + TRUNCATION_NOTICE
+        assert "truncated" in caplog.text
+        assert caplog.records[-1].levelname == "WARNING"
 
     def test_truncated_json_is_not_marked(self, fake_models):
         fake_models.next_response = text_response('{"a": "cut', types.FinishReason.MAX_TOKENS)

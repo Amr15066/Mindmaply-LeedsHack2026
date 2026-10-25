@@ -3,12 +3,15 @@ Block lifecycle management.
 Creating, updating, and summarizing blocks.
 """
 
+import logging
 from mindmap_chat.llm.base import LLMClient
 from mindmap_chat.llm import prompts
 from mindmap_chat.models import Block, ConversationGraph
 from mindmap_chat.core.embeddings import embed_text
 from mindmap_chat.core.context_builder import construct_summary_prompt_context
 from mindmap_chat.config import config
+
+logger = logging.getLogger(__name__)
 
 
 def create_root_block(llm_client: LLMClient, user_message: str) -> Block:
@@ -103,11 +106,11 @@ def summarize_block(llm_client: LLMClient, graph: ConversationGraph,
             block.title = new_title
 
         block.last_summarized_at = len(block.conversation_refs)
-        print(f"[OK] Block '{block.title}' summarized")
+        logger.info("Block %r summarized", block.title)
         return True
 
     except Exception as e:
-        print(f"Error summarizing block: {e}")
+        logger.error("Error summarizing block %r: %s", block.title, e)
         return False
 
 
@@ -128,5 +131,8 @@ def maybe_auto_summarize(llm_client: LLMClient, graph: ConversationGraph,
     new_messages = message_count - block.last_summarized_at
 
     if new_messages >= config.auto_summarize_after_n_messages:
-        print(f"Auto-summarizing block ({new_messages} new messages, {message_count} total)...")
+        logger.info(
+            "Auto-summarizing block %r (%d new messages, %d total)",
+            block.title, new_messages, message_count,
+        )
         summarize_block(llm_client, graph, block)

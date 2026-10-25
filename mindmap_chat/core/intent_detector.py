@@ -3,6 +3,7 @@ Intent shift detection.
 Determines if new message continues, deepens, or diverges from current block.
 """
 
+import logging
 import json
 from typing import List, Optional
 
@@ -11,6 +12,8 @@ from mindmap_chat.llm import prompts
 from mindmap_chat.models import Block, BlockClassification, ConversationMessage
 from mindmap_chat.core.embeddings import compute_similarity, embed_text
 from mindmap_chat.config import config
+
+logger = logging.getLogger(__name__)
 
 
 def detect_intent_shift(llm_client: LLMClient, current_block: Block,
@@ -98,7 +101,7 @@ def _classify_with_llm(llm_client: LLMClient, current_block: Block,
         return _classification_from_json(response_json)
 
     except Exception as e:
-        print(f"Error in LLM classification: {e}")
+        logger.error("Error in LLM classification: %s", e)
         # Fallback
         return BlockClassification(
             action="continue",

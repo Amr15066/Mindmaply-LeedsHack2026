@@ -4,6 +4,7 @@ Simple, local, easy to debug and inspect.
 Atomic writes with file locking to prevent corruption.
 """
 
+import logging
 import json
 import os
 import tempfile
@@ -13,6 +14,8 @@ from threading import Lock
 from mindmap_chat.models import Mindmap
 
 from .migrations import SCHEMA_VERSION, UnrecognisedDocument, migrate
+
+logger = logging.getLogger(__name__)
 
 
 class JSONStorage:
@@ -52,7 +55,7 @@ class JSONStorage:
                 
                 # Atomic rename (all-or-nothing on most filesystems)
                 os.replace(temp_path, self.file_path)
-                print(f"[SAVED] {self.file_path}")
+                logger.debug("Saved %s", self.file_path)
             except Exception as e:
                 # Clean up temp file on error
                 if os.path.exists(temp_path):
@@ -82,9 +85,9 @@ class JSONStorage:
                     f"{self.file_path.name}.unreadable-{int(time.time())}"
                 )
                 os.replace(self.file_path, backup)
-                print(
-                    f"[ERROR] Could not read {self.file_path} ({exc}); moved it to {backup} "
-                    f"and started an empty mindmap"
+                logger.error(
+                    "Could not read %s (%s); moved it to %s and started an empty mindmap",
+                    self.file_path, exc, backup,
                 )
                 return Mindmap()
             # NewerSchemaError propagates: never silently discard newer data.
@@ -99,4 +102,4 @@ class JSONStorage:
         with self._lock:
             if self.file_path.exists():
                 os.remove(self.file_path)
-                print(f"[CLEARED] {self.file_path}")
+                logger.info("Cleared %s", self.file_path)

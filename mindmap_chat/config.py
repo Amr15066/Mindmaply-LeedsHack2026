@@ -3,11 +3,14 @@ Configuration and environment settings.
 Centralized place for API keys, model names, thresholds.
 """
 
+import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 # Load .env from mindmap_chat folder
 env_path = Path(__file__).parent / ".env"
@@ -82,4 +85,4 @@ def validate_config():
     """Validate that all required config is set."""
     if not config.gemini.api_key:
         raise ValueError("GEMINI_API_KEY environment variable not set")
-    print("[OK] Configuration validated")
+    logger.info("Configuration validated")

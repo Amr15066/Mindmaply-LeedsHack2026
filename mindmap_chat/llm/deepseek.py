@@ -3,12 +3,15 @@ DeepSeek API client implementation.
 Uses DeepSeek for generation (answering) but Gemini for embeddings (cheap).
 """
 
+import logging
 import requests
 
 from mindmap_chat.config import config
 
 from .base import TRUNCATION_NOTICE, LLMClient, LLMResponseError
 from .gemini import GeminiClient
+
+logger = logging.getLogger(__name__)
 
 
 class DeepSeekClient(LLMClient):
@@ -65,7 +68,9 @@ class DeepSeekClient(LLMClient):
         if not text:
             raise LLMResponseError(f"DeepSeek returned no content: {data}")
         if choices[0].get("finish_reason") == "length":
-            print(f"[WARN] DeepSeek response truncated at {config.deepseek.max_output_tokens} tokens")
+            logger.warning(
+                "DeepSeek response truncated at %d tokens", config.deepseek.max_output_tokens
+            )
             if not json_mode:
                 text += TRUNCATION_NOTICE
         return text

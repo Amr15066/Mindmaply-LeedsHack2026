@@ -3,9 +3,12 @@ Abstract base class for LLM clients.
 Allows easy swapping of different LLM providers.
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 import json
+
+logger = logging.getLogger(__name__)
 
 # Appended to free-text answers that hit the output-token limit, so a cut-off
 # answer is never presented as complete.
@@ -78,7 +81,7 @@ class LLMClient(ABC):
             repaired = _repair_json_payload(response)
             if repaired is not None:
                 return json.loads(repaired)
-            print(f"Failed to parse JSON response: {response}")
+            logger.error("Failed to parse JSON response: %r", response)
             raise
 
 def _extract_json_payload(response: str) -> Optional[str]:

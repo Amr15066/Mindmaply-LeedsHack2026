@@ -3,6 +3,7 @@ Main conversation loop and orchestration.
 Ties together all modules for the core functionality.
 """
 
+import logging
 from typing import Optional
 import re
 
@@ -23,6 +24,8 @@ from mindmap_chat.core.embeddings import cosine_batch
 from mindmap_chat.config import config
 from mindmap_chat.storage import JSONStorage
 from mindmap_chat.utils import print_block_tree
+
+logger = logging.getLogger(__name__)
 
 
 class ConversationManager:
@@ -70,7 +73,7 @@ class ConversationManager:
         # Save
         self.storage.save(self.mindmap)
         
-        print(f"\n[OK] Started new conversation: '{root_block.title}'")
+        logger.info("Started new conversation: %r", root_block.title)
         return response
 
     def continue_conversation(self, user_message: str) -> str:
@@ -92,7 +95,6 @@ class ConversationManager:
         block_messages = self.graph.get_block_messages(current_block.block_id)
         
         # Detect intent shift
-        print("\n[Analyzing intent...]")
         # Embed the message once; reused by every similarity check this turn
         message_embedding = embed_text(self.llm, user_message)
         classification = detect_intent_shift(
@@ -103,8 +105,10 @@ class ConversationManager:
             new_msg_embedding=message_embedding,
         )
         
-        print(f"  [ACTION] {classification.action} (confidence: {classification.confidence:.2f})")
-        print(f"  [REASON] {classification.reasoning}")
+        logger.info(
+            "Intent: %s (confidence %.2f) - %s",
+            classification.action, classification.confidence, classification.reasoning,
+        )
         
         # Handle classification
         if classification.action == "continue":
@@ -133,9 +137,8 @@ class ConversationManager:
                     self.mindmap.current_graph_id = matched_graph.graph_id
                     self.graph.current_block_id = matched_block.block_id
                     target_block = matched_block
-                    print(
-                        f"  [MATCH] Redirected tangent to '{matched_block.title}' "
-                        f"(similarity: {similarity:.2f})"
+                    logger.info(
+                        "Redirected tangent to %r (similarity %.2f)", matched_block.title, similarity
                     )
                 else:
                     self.graph = matched_graph
@@ -158,9 +161,8 @@ class ConversationManager:
                     )
                     target_block = created_blocks[0]
                     self.graph.current_block_id = target_block.block_id
-                    print(
-                        f"  [MATCH] Created child under '{matched_block.title}' "
-                        f"(similarity: {similarity:.2f})"
+                    logger.info(
+                        "Created child under %r (similarity %.2f)", matched_block.title, similarity
                     )
             else:
                 # Start a new graph with this message as the root block
@@ -270,7 +272,7 @@ class ConversationManager:
                         "intent": intent or "New discussion",
                     })
         except Exception as exc:
-            print(f"  [WARN] Could not expand deepen blocks: {exc}")
+            logger.warning("Could not expand deepen blocks: %s", exc)
 
         if not new_blocks:
             new_blocks = [{
@@ -302,7 +304,7 @@ class ConversationManager:
             new_block.relation_reasoning = reasoning
             self.graph.add_block(new_block)
             created_blocks.append(new_block)
-            print(f"  [NEW] Created new block: '{new_block.title}'")
+            logger.info("Created new block %r (%s)", new_block.title, relation)
         return created_blocks
     
    

@@ -5,6 +5,8 @@ Main entry point: Interactive CLI for the mindmap chat system.
 from dotenv import load_dotenv
 load_dotenv()
 
+import logging
+import os
 import sys
 from mindmap_chat.config import config, validate_config
 from mindmap_chat.llm.gemini import GeminiClient
@@ -35,6 +37,11 @@ Just type to continue the current conversation.
 
 def main():
     """Main CLI loop."""
+    # Routing decisions are logged at INFO, which the CLI shows by default.
+    logging.basicConfig(
+        level=os.getenv("LOG_LEVEL", "INFO").upper(),
+        format="  [%(levelname)s] %(message)s",
+    )
     try:
         validate_config()
     except ValueError as e:

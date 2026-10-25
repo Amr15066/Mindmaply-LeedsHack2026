@@ -2,12 +2,15 @@
 Gemini API client implementation (google-genai SDK).
 """
 
+import logging
 from google import genai
 from google.genai import types
 
 from mindmap_chat.config import config
 
 from .base import TRUNCATION_NOTICE, LLMClient, LLMResponseError
+
+logger = logging.getLogger(__name__)
 
 
 class GeminiClient(LLMClient):
@@ -56,7 +59,9 @@ class GeminiClient(LLMClient):
             )
 
         if finish_reason == types.FinishReason.MAX_TOKENS:
-            print(f"[WARN] Gemini response truncated at {config.gemini.max_output_tokens} tokens")
+            logger.warning(
+                "Gemini response truncated at %d tokens", config.gemini.max_output_tokens
+            )
             if not json_mode:
                 text += TRUNCATION_NOTICE
         return text
