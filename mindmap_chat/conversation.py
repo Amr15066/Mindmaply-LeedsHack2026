@@ -404,8 +404,8 @@ class ConversationManager:
         
         block = self.graph.blocks[block_id]
         
-        # Delete all children using depth-first traversal
-        descendants = self._delete_children(block_id)
+        # Delete the block and everything below it
+        descendants = [d for d in self.graph.collect_descendants(block_id) if d != block_id]
         delete_ids = [block_id] + descendants
 
         if block.parent_block_id and block.parent_block_id in self.graph.blocks:
@@ -419,40 +419,6 @@ class ConversationManager:
 
         self.storage.save(self.mindmap)
     
-    def _delete_children(self, block_id: str) -> list[str]:
-        """
-        Iteratively collect all children of a block using depth-first traversal.
-        Avoids recursion depth issues and memory leak risks.
-        
-        Args:
-            block_id: ID of the block whose children to delete
-            
-        Returns:
-            List of deleted descendant block IDs (excluding the block_id itself)
-        """
-        deleted_ids = []
-        stack = [block_id]
-        visited = set()
-        
-        # Build parent->children map in reverse (children->parents)
-        while stack:
-            current_id = stack.pop()
-            
-            if current_id in visited:
-                continue  # Avoid infinite loops from circular references
-            
-            visited.add(current_id)
-            block = self.graph.blocks.get(current_id)
-            
-            if block:
-                stack.extend(block.children)
-        
-        # visited contains all reachable blocks from block_id
-        # Remove the root block_id itself
-        deleted_ids = list(visited - {block_id})
-        
-        return deleted_ids
-        
     def list_graphs(self) -> list[tuple[str, str]]:
         summaries = []
         for graph_id, graph in self.mindmap.graphs.items():

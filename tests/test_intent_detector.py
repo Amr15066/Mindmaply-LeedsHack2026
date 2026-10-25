@@ -63,6 +63,17 @@ def test_legacy_single_block_fields_are_accepted(fake_llm):
     assert result.new_blocks == [{"title": "Legacy", "intent": "New discussion"}]
 
 
+def test_unparseable_reply_is_retried_once(fake_llm):
+    set_similarity(fake_llm, "msg", 0.1)
+    fake_llm.raw_responses = [
+        "not json",
+        '{"classification": "TANGENT", "confidence": 0.6, "reasoning": "second try"}',
+    ]
+    result = detect_intent_shift(fake_llm, block_with_intent(), "msg", [])
+    assert (result.action, result.reasoning) == ("tangent", "second try")
+    assert "Reminder: Return a single valid JSON object" in fake_llm.prompts[-1]
+
+
 def test_llm_failure_falls_back_to_continue(fake_llm):
     set_similarity(fake_llm, "msg", 0.1)
     fake_llm.raw_responses = ["not json", "still not json"]

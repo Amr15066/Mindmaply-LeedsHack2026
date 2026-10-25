@@ -60,18 +60,13 @@ def create_child_block(llm_client: LLMClient, parent_block: Block,
     # Embed the intent
     intent_embedding = embed_text(llm_client, intent)
     
-    # Create block
-    block = Block(
+    # Create block (ConversationGraph.add_block registers it on the parent)
+    return Block(
         parent_block_id=parent_block.block_id,
         title=title,
         intent=intent,
         embedding=intent_embedding,
     )
-    
-    # Update parent
-    parent_block.add_child(block.block_id)
-    
-    return block
 
 
 def summarize_block(llm_client: LLMClient, graph: ConversationGraph,

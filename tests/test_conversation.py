@@ -196,6 +196,41 @@ def test_tangent_matched_in_other_graph_records_sibling(manager, fake_llm):
     assert "Fake Title" in child.relation_reasoning  # names the matched block
 
 
+def test_child_is_registered_on_parent_exactly_once(manager, fake_llm):
+    root = start(manager)
+    fake_llm.classification = {
+        "classification": "NEW_CHILD",
+        "confidence": 0.8,
+        "new_blocks": [{"title": "A", "intent": "a"}, {"title": "B", "intent": "b"}],
+    }
+    manager.continue_conversation("two subtopics")
+    assert len(root.children) == len(set(root.children)) == 2
+
+
+def test_delete_block_removes_subtree_and_moves_to_parent(manager, fake_llm):
+    root = start(manager)
+    fake_llm.classification = {
+        "classification": "NEW_CHILD",
+        "confidence": 0.8,
+        "new_blocks": [{"title": "A", "intent": "a"}],
+    }
+    manager.continue_conversation("subtopic A")
+    child_id = manager.graph.current_block_id
+    fake_llm.classification["new_blocks"] = [{"title": "A1", "intent": "a1"}]
+    manager.continue_conversation("deeper in A")
+    grandchild_id = manager.graph.current_block_id
+
+    manager.delete_block(child_id)
+
+    assert set(manager.graph.blocks) == {root.block_id}
+    assert root.children == []
+    assert manager.graph.current_block_id == root.block_id
+    assert {m.block_id for m in manager.graph.messages.values()} == {root.block_id}
+    assert grandchild_id not in manager.graph.blocks
+    with pytest.raises(ValueError, match="root"):
+        manager.delete_block(root.block_id)
+
+
 def test_tangent_turn_embeds_the_message_once(manager, fake_llm):
     """Regression (§2.9): the message was embedded again for the cross-graph search."""
     start(manager)

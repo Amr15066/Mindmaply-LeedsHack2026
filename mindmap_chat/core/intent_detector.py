@@ -87,78 +87,16 @@ def _classify_with_llm(llm_client: LLMClient, current_block: Block,
     )
     
     try:
-        response_json = llm_client.call_json(base_prompt)
-        
-        # Map LLM response to our action enum
-        llm_action = response_json.get("classification", "").upper()
-        action_map = {
-            "CONTINUE": "continue",
-            "DEEPEN": "deepen",
-            "NEW_CHILD": "new_child",
-            "TANGENT": "tangent",
-        }
-        
-        action = action_map.get(llm_action, "continue")
-
-        new_blocks = _parse_new_blocks(response_json)
-        if not new_blocks:
-            legacy_title = response_json.get("new_block_title")
-            legacy_intent = response_json.get("new_block_intent")
-            if legacy_title or legacy_intent:
-                new_blocks = [{
-                    "title": legacy_title or "Untitled",
-                    "intent": legacy_intent or "New discussion",
-                }]
-        
-        return BlockClassification(
-            action=action,
-            confidence=float(response_json.get("confidence", 0.5)),
-            reasoning=response_json.get("reasoning", ""),
-            new_block_title=response_json.get("new_block_title"),
-            new_block_intent=response_json.get("new_block_intent"),
-            new_blocks=new_blocks
-        )
-    
-    except json.JSONDecodeError:
-        retry_prompt = (
-            base_prompt
-            + "\n\nReminder: Return a single valid JSON object only. No extra text."
-        )
         try:
+            response_json = llm_client.call_json(base_prompt)
+        except json.JSONDecodeError:
+            retry_prompt = (
+                base_prompt
+                + "\n\nReminder: Return a single valid JSON object only. No extra text."
+            )
             response_json = llm_client.call_json(retry_prompt)
-            llm_action = response_json.get("classification", "").upper()
-            action_map = {
-                "CONTINUE": "continue",
-                "DEEPEN": "deepen",
-                "NEW_CHILD": "new_child",
-                "TANGENT": "tangent",
-            }
-            action = action_map.get(llm_action, "continue")
-            new_blocks = _parse_new_blocks(response_json)
-            if not new_blocks:
-                legacy_title = response_json.get("new_block_title")
-                legacy_intent = response_json.get("new_block_intent")
-                if legacy_title or legacy_intent:
-                    new_blocks = [{
-                        "title": legacy_title or "Untitled",
-                        "intent": legacy_intent or "New discussion",
-                    }]
-            return BlockClassification(
-                action=action,
-                confidence=float(response_json.get("confidence", 0.5)),
-                reasoning=response_json.get("reasoning", ""),
-                new_block_title=response_json.get("new_block_title"),
-                new_block_intent=response_json.get("new_block_intent"),
-                new_blocks=new_blocks
-            )
-        except Exception as e:
-            print(f"Error in LLM classification: {e}")
-            return BlockClassification(
-                action="continue",
-                confidence=0.5,
-                reasoning="Fallback classification due to LLM error"
-            )
-    
+        return _classification_from_json(response_json)
+
     except Exception as e:
         print(f"Error in LLM classification: {e}")
         # Fallback
@@ -167,6 +105,41 @@ def _classify_with_llm(llm_client: LLMClient, current_block: Block,
             confidence=0.5,
             reasoning="Fallback classification due to LLM error"
         )
+
+
+_ACTION_MAP = {
+    "CONTINUE": "continue",
+    "DEEPEN": "deepen",
+    "NEW_CHILD": "new_child",
+    "TANGENT": "tangent",
+}
+
+
+def _classification_from_json(response_json: dict) -> BlockClassification:
+    """Map the classifier's JSON onto a BlockClassification (unknown labels -> continue)."""
+    llm_action = str(response_json.get("classification", "")).upper()
+    action = _ACTION_MAP.get(llm_action, "continue")
+
+    new_blocks = _parse_new_blocks(response_json)
+    if not new_blocks:
+        legacy_title = response_json.get("new_block_title")
+        legacy_intent = response_json.get("new_block_intent")
+        if legacy_title or legacy_intent:
+            new_blocks = [{
+                "title": legacy_title or "Untitled",
+                "intent": legacy_intent or "New discussion",
+            }]
+
+    return BlockClassification(
+        action=action,
+        confidence=float(response_json.get("confidence", 0.5)),
+        reasoning=response_json.get("reasoning", ""),
+        new_block_title=response_json.get("new_block_title"),
+        new_block_intent=response_json.get("new_block_intent"),
+        new_blocks=new_blocks
+    )
+
+
 def _parse_new_blocks(response_json: dict) -> list[dict]:
     new_blocks = []
     for item in response_json.get("new_blocks", []) or []:

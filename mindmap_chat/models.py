@@ -137,7 +137,8 @@ class ConversationGraph:
     def collect_descendants(self, block_id: str) -> List[str]:
         """Collect all descendant block IDs for a given block."""
         collected: List[str] = []
-        to_visit = list(self.blocks.get(block_id, Block()).children)
+        start = self.blocks.get(block_id)
+        to_visit = list(start.children) if start else []
         while to_visit:
             current_id = to_visit.pop()
             if current_id in collected:
