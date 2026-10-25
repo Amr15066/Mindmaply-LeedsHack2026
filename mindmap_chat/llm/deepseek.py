@@ -4,6 +4,8 @@ Uses DeepSeek for generation (answering) but Gemini for embeddings (cheap).
 """
 
 import logging
+from typing import Any, Dict
+
 import requests
 
 from mindmap_chat.config import config
@@ -43,7 +45,7 @@ class DeepSeekClient(LLMClient):
             "Content-Type": "application/json",
         }
 
-        payload = {
+        payload: Dict[str, Any] = {
             "model": self.model_name,
             "messages": [
                 {"role": "user", "content": prompt}

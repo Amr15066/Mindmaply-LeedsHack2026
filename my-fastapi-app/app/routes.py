@@ -167,7 +167,7 @@ def create_new_mindmap(payload: StartConversationRequest):
         # The root node title is the user-provided topic (saved once, by the manager)
         response_text = mgr.start_new_conversation(payload.topic, title=payload.topic or None)
 
-    graph = mgr.graph
+    graph = mgr.active_graph()
     root_block = graph.blocks[graph.root_block_id]
     return {
         "graph_id": graph.graph_id,
@@ -201,11 +201,7 @@ def chat(payload: ChatRequest):
             assistant_response = mgr.continue_conversation(payload.content)
         # ConversationManager has saved to storage.
 
-    graph = mgr.graph
-    if not graph:
-        # Should not happen, but keep response predictable
-        raise HTTPException(status_code=500, detail="No active graph after chat call")
-
+    graph = mgr.active_graph()
     current_block_id = graph.current_block_id or graph.root_block_id
     return {
         "graph_id": graph.graph_id,
@@ -289,7 +285,7 @@ def add_message_to_block(block_id: str, payload: MessageRequest):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"LLM error: {str(e)}") from e
 
-    graph = mgr.graph
+    graph = mgr.active_graph()  # may differ from the block's graph after a tangent
     current_block_id = graph.current_block_id
     return {
         "block_id": block_id,

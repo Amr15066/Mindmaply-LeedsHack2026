@@ -2,11 +2,12 @@
 Utility functions.
 """
 
-from typing import List
+from typing import List, Optional
 from mindmap_chat.models import Block, ConversationGraph
 
 
-def print_block_tree(graph: ConversationGraph, block_id: str = None, indent: int = 0) -> None:
+def print_block_tree(graph: ConversationGraph, block_id: Optional[str] = None,
+                     indent: int = 0) -> None:
     """
     Print the block tree to console.
     

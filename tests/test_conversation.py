@@ -22,6 +22,13 @@ def same_topic(fake_llm, message, intent="fake intent"):
     fake_llm.embeddings[message] = unit_vector(intent)
 
 
+def test_active_graph_requires_a_conversation(manager):
+    with pytest.raises(ValueError, match="No active graph"):
+        manager.active_graph()
+    manager.start_new_conversation("What is X?")
+    assert manager.active_graph() is manager.graph
+
+
 def test_start_new_conversation_creates_root_with_one_exchange(manager, fake_llm, storage):
     response = manager.start_new_conversation("What is X?")
     assert response == "fake answer"

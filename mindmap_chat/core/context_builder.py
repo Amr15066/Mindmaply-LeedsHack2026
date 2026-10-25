@@ -82,7 +82,7 @@ def format_ancestor_context(graph: ConversationGraph, block: Block,
 
 
 def construct_block_context(graph: ConversationGraph, block: Block,
-                          max_messages: int = None) -> str:
+                          max_messages: Optional[int] = None) -> str:
     """
     Construct minimal context for answering in a block.
     

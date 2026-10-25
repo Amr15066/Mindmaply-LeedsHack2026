@@ -94,4 +94,4 @@ class GeminiClient(LLMClient):
             raise LLMResponseError(
                 f"Gemini returned {len(embeddings)} embeddings for {len(texts)} texts"
             )
-        return [list(e.values) for e in embeddings]
+        return [list(e.values or []) for e in embeddings]

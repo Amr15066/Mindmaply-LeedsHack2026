@@ -41,8 +41,16 @@ dev = [
     "pytest-cov>=5",
     "httpx>=0.27",
     "ruff>=0.6",
+    "mypy>=1.10",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [".", "my-fastapi-app"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["mindmap_chat", "my-fastapi-app/app"]
+mypy_path = "my-fastapi-app"
+check_untyped_defs = true
+ignore_missing_imports = true

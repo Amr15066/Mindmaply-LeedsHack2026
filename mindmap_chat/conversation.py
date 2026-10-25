@@ -46,6 +46,12 @@ class ConversationManager:
         self.mindmap = mindmap if mindmap is not None else storage.load()
         self.graph = self.mindmap.get_current_graph()
 
+    def active_graph(self) -> ConversationGraph:
+        """The current graph; raises if no conversation has been started."""
+        if self.graph is None:
+            raise ValueError("No active graph")
+        return self.graph
+
     def start_new_conversation(self, user_message: str, title: Optional[str] = None) -> str:
         """
         Start a completely new conversation.
@@ -224,7 +230,7 @@ class ConversationManager:
         # Block-scoped context (title, intent, summary, key points, open
         # questions, recent history). Built before the new message is stored,
         # so the message appears in the prompt exactly once.
-        context = construct_block_context(self.graph, block)
+        context = construct_block_context(self.active_graph(), block)
         prompt = prompts.prompt_answer_in_block_context(context, block.intent, user_message)
         return self.llm.call(prompt)
 
@@ -232,7 +238,7 @@ class ConversationManager:
         """Store a user message and the assistant's response in a block."""
         for role, content in (("user", user_message), ("assistant", response)):
             message = ConversationMessage(block_id=block.block_id, role=role, content=content)
-            self.graph.add_message(message)
+            self.active_graph().add_message(message)
             block.add_message_ref(message.message_id)
 
     def _resolve_deepen_blocks(
@@ -302,7 +308,7 @@ class ConversationManager:
             new_block.relation = relation
             new_block.relation_confidence = confidence
             new_block.relation_reasoning = reasoning
-            self.graph.add_block(new_block)
+            self.active_graph().add_block(new_block)
             created_blocks.append(new_block)
             logger.info("Created new block %r (%s)", new_block.title, relation)
         return created_blocks
