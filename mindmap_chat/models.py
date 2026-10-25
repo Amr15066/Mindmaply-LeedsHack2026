@@ -41,6 +41,11 @@ class Block:
     embedding: List[float] = field(default_factory=list)  # Intent embedding
     children: List[str] = field(default_factory=list)
     conversation_refs: List[str] = field(default_factory=list)  # message_ids
+    # Why this block is connected to its parent (the edge parent -> this block):
+    # "deepen" | "child" | "sibling" (colours in to_d3_graph); unused on root blocks.
+    relation: str = "child"
+    relation_confidence: float = 0.0
+    relation_reasoning: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -201,24 +206,20 @@ class ConversationGraph:
                 "is_current": block_id == self.current_block_id,
             })
         
-        # Build links from parent-child relationships
-        # Infer relation type from metadata (default to "child")
+        # Build links from parent-child relationships, using the relation
+        # recorded on the child when it was created
         for block_id, block in self.blocks.items():
             if block.parent_block_id:
-                # Default to "child" relation with 0.8 confidence
-                relation = "child"
-                confidence = 0.8
-                
-                color = relation_colors.get(relation, relation_colors["child"])
-                weight = relation_weights.get(relation, relation_weights["child"])
-                
+                relation = block.relation if block.relation in relation_colors else "child"
+
                 links.append({
                     "source": block.parent_block_id,
                     "target": block_id,
                     "relation": relation,
-                    "confidence": confidence,
-                    "color": color,
-                    "strokeWidth": weight,
+                    "confidence": block.relation_confidence,
+                    "reasoning": block.relation_reasoning,
+                    "color": relation_colors[relation],
+                    "strokeWidth": relation_weights[relation],
                 })
         
         return {

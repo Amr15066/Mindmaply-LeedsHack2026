@@ -507,9 +507,15 @@ function drawMindmap(graphData) {
         .enter().append('line')
         .attr('stroke', d => d.color || '#999')
         .attr('stroke-width', d => d.strokeWidth || 2)
-        .attr('stroke-opacity', 0.7)
-        .attr('title', d => `${d.relation} (${(d.confidence * 100).toFixed(0)}%)`);
-    
+        .attr('stroke-opacity', 0.7);
+
+    // Hover tooltip: why these two blocks are connected (SVG needs a <title> child)
+    link.append('title')
+        .text(d => {
+            const label = `${d.relation} (${((d.confidence || 0) * 100).toFixed(0)}%)`;
+            return d.reasoning ? `${label}\n${d.reasoning}` : label;
+        });
+
     // Create nodes
     const node = svg.append('g')
         .selectAll('g')

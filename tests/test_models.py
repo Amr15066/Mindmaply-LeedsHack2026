@@ -100,3 +100,27 @@ def test_to_d3_graph_has_one_node_per_block_and_one_link_per_edge():
     }
     current = [n for n in d3["nodes"] if n["is_current"]]
     assert [n["id"] for n in current] == [a.block_id]
+
+
+def test_d3_links_use_the_recorded_relation():
+    """Regression (§2.3): every link was hard-coded to relation "child", confidence 0.8."""
+    graph, root, a, a1, a2, b = make_tree()
+    a.relation, a.relation_confidence, a.relation_reasoning = "deepen", 0.77, "went deeper"
+    b.relation = "not-a-relation"
+    links = {link["target"]: link for link in graph.to_d3_graph()["links"]}
+    assert links[a.block_id]["relation"] == "deepen"
+    assert links[a.block_id]["confidence"] == 0.77
+    assert links[a.block_id]["reasoning"] == "went deeper"
+    assert links[a.block_id]["color"] == "#66BB6A"
+    assert links[b.block_id]["relation"] == "child"  # unknown values fall back
+
+
+def test_blocks_saved_before_relations_existed_still_load():
+    graph, root, a, *_ = make_tree()
+    data = graph.to_dict()
+    for block in data["blocks"].values():
+        for key in ("relation", "relation_confidence", "relation_reasoning"):
+            del block[key]
+    loaded = ConversationGraph.from_dict(data)
+    assert loaded.blocks[a.block_id].relation == "child"
+    assert loaded.blocks[a.block_id].relation_confidence == 0.0

@@ -103,7 +103,13 @@ class ConversationManager:
         elif classification.action == "deepen":
             # Create child block(s) for a deeper dive
             new_blocks = self._resolve_deepen_blocks(classification, current_block, user_message)
-            created_blocks = self._create_child_blocks(current_block, new_blocks)
+            created_blocks = self._create_child_blocks(
+                current_block,
+                new_blocks,
+                relation="deepen",
+                confidence=classification.confidence,
+                reasoning=classification.reasoning,
+            )
             target_block = created_blocks[0]
             self.graph.current_block_id = target_block.block_id
 
@@ -132,6 +138,12 @@ class ConversationManager:
                     created_blocks = self._create_child_blocks(
                         matched_block,
                         new_blocks,
+                        relation="sibling",
+                        confidence=similarity,
+                        reasoning=(
+                            f"Tangent matched existing block '{matched_block.title}' "
+                            f"(similarity: {similarity:.2f})"
+                        ),
                     )
                     target_block = created_blocks[0]
                     self.graph.current_block_id = target_block.block_id
@@ -159,7 +171,13 @@ class ConversationManager:
             if not new_blocks:
                 new_blocks = [{"title": "Untitled", "intent": "New discussion"}]
 
-            created_blocks = self._create_child_blocks(current_block, new_blocks)
+            created_blocks = self._create_child_blocks(
+                current_block,
+                new_blocks,
+                relation="child",
+                confidence=classification.confidence,
+                reasoning=classification.reasoning,
+            )
             target_block = created_blocks[0]
             self.graph.current_block_id = target_block.block_id
         
@@ -251,7 +269,15 @@ class ConversationManager:
 
         return new_blocks
 
-    def _create_child_blocks(self, parent_block: Block, new_blocks: list[dict[str, str]]) -> list[Block]:
+    def _create_child_blocks(
+        self,
+        parent_block: Block,
+        new_blocks: list[dict[str, str]],
+        relation: str,
+        confidence: float,
+        reasoning: str,
+    ) -> list[Block]:
+        """Create child blocks, recording why they are connected to the parent."""
         created_blocks = []
         for block_seed in new_blocks:
             new_block = create_child_block(
@@ -260,6 +286,9 @@ class ConversationManager:
                 block_seed.get("title", "Untitled"),
                 block_seed.get("intent", "New discussion"),
             )
+            new_block.relation = relation
+            new_block.relation_confidence = confidence
+            new_block.relation_reasoning = reasoning
             self.graph.add_block(new_block)
             created_blocks.append(new_block)
             print(f"  [NEW] Created new block: '{new_block.title}'")
