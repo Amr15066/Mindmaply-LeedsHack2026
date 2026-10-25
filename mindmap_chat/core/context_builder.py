@@ -3,7 +3,7 @@ Context construction for LLM calls.
 Builds focused context from block data instead of dumping entire history.
 """
 
-from typing import List
+from typing import List, Optional
 from mindmap_chat.models import Block, ConversationMessage, ConversationGraph
 from mindmap_chat.config import config
 
@@ -35,7 +35,53 @@ def format_conversation_turns(messages: List[ConversationMessage]) -> str:
     return "\n\n".join(turns)
 
 
-def construct_block_context(graph: ConversationGraph, block: Block, 
+def format_ancestor_context(graph: ConversationGraph, block: Block,
+                            max_depth: Optional[int] = None,
+                            max_chars: Optional[int] = None) -> str:
+    """
+    Describe the blocks this one branched from, nearest first, so a child block
+    keeps the thread it came from.
+
+    Each ancestor contributes its summary (or its intent, if not yet summarized).
+    Stops after ``max_depth`` ancestors or once ``max_chars`` would be exceeded;
+    the nearest parent is always included, truncated if necessary.
+
+    Returns:
+        A formatted section ending in a blank line, or "" for a root block
+    """
+    if max_depth is None:
+        max_depth = config.ancestor_context_depth
+    if max_chars is None:
+        max_chars = config.ancestor_context_chars
+
+    lines: List[str] = []
+    used = 0
+    seen = {block.block_id}
+    parent_id = block.parent_block_id
+    while parent_id and parent_id not in seen and len(lines) < max_depth:
+        parent = graph.blocks.get(parent_id)
+        if parent is None:
+            break
+        seen.add(parent_id)
+        line = f"- {parent.title}: {parent.summary or parent.intent}"
+        if used + len(line) > max_chars:
+            if lines:
+                break
+            line = line[: max(max_chars - 3, 0)] + "..."
+        lines.append(line)
+        used += len(line)
+        parent_id = parent.parent_block_id
+
+    if not lines:
+        return ""
+    return (
+        "\nPARENT TOPICS (this block branched from these, nearest first):\n"
+        + "\n".join(lines)
+        + "\n"
+    )
+
+
+def construct_block_context(graph: ConversationGraph, block: Block,
                           max_messages: int = None) -> str:
     """
     Construct minimal context for answering in a block.
@@ -61,8 +107,9 @@ def construct_block_context(graph: ConversationGraph, block: Block,
     key_points_str = format_key_points(block.key_points)
     open_questions_str = format_open_questions(block.open_questions)
     recent_messages_str = format_conversation_turns(recent_messages)
-    
-    context = f"""
+    ancestors_str = format_ancestor_context(graph, block)
+
+    context = f"""{ancestors_str}
 BLOCK CONTEXT:
 Title: {block.title}
 Intent: {block.intent}

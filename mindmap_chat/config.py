@@ -70,6 +70,8 @@ class AppConfig:
     # Shared by the CLI and the web app; override with MINDMAP_STORAGE_PATH.
     storage_path: str = _env("MINDMAP_STORAGE_PATH", DEFAULT_STORAGE_PATH)
     context_window_size: int = 3  # Last N messages to include in context
+    ancestor_context_depth: int = 3  # Parent blocks included in answer context
+    ancestor_context_chars: int = 1500  # Character budget for those parents
 
 
 # Global config instance

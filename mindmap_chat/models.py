@@ -17,7 +17,6 @@ class ConversationMessage:
     role: str = "user"  # "user" or "assistant"
     content: str = ""
     timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
-    embedding: List[float] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

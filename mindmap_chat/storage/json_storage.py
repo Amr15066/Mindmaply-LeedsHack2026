@@ -7,9 +7,12 @@ Atomic writes with file locking to prevent corruption.
 import json
 import os
 import tempfile
+import time
 from pathlib import Path
 from threading import Lock
-from mindmap_chat.models import ConversationGraph, Mindmap
+from mindmap_chat.models import Mindmap
+
+from .migrations import SCHEMA_VERSION, UnrecognisedDocument, migrate
 
 
 class JSONStorage:
@@ -34,8 +37,8 @@ class JSONStorage:
         Args:
             mindmap: Mindmap to save
         """
-        data = mindmap.to_dict()
-        
+        data = {"schema_version": SCHEMA_VERSION, **mindmap.to_dict()}
+
         with self._lock:
             # Write to temporary file in same directory (ensures same filesystem)
             temp_fd, temp_path = tempfile.mkstemp(
@@ -70,21 +73,23 @@ class JSONStorage:
             try:
                 with open(self.file_path, "r") as f:
                     data = json.load(f)
-            except json.JSONDecodeError:
-                print(f"[ERROR] Corrupted JSON in {self.file_path}, returning empty mindmap")
+                if not isinstance(data, dict):
+                    raise UnrecognisedDocument("Top-level JSON value is not an object")
+                data = migrate(data)
+            except (json.JSONDecodeError, UnrecognisedDocument) as exc:
+                # Keep the unreadable file: the next save() would overwrite it.
+                backup = self.file_path.with_name(
+                    f"{self.file_path.name}.unreadable-{int(time.time())}"
+                )
+                os.replace(self.file_path, backup)
+                print(
+                    f"[ERROR] Could not read {self.file_path} ({exc}); moved it to {backup} "
+                    f"and started an empty mindmap"
+                )
                 return Mindmap()
-            
-        if "graphs" in data:
-            mindmap = Mindmap.from_dict(data)
-        elif "blocks" in data:
-            # Legacy format: the file holds a single ConversationGraph
-            graph = ConversationGraph.from_dict(data)
-            mindmap = Mindmap()
-            mindmap.add_graph(graph)
-        else:
-            print(f"[ERROR] Unrecognised document in {self.file_path}, returning empty mindmap")
-            return Mindmap()
+            # NewerSchemaError propagates: never silently discard newer data.
 
+        mindmap = Mindmap.from_dict(data)
         for graph in mindmap.graphs.values():
             graph.rebuild_children()
         return mindmap
