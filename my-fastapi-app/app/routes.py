@@ -1,11 +1,12 @@
 from fastapi import Request, HTTPException, BackgroundTasks
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from typing import List, Dict, Any
 
 from app import app, templates
 from mindmap_chat.storage import JSONStorage
 from mindmap_chat.conversation import ConversationManager
+from mindmap_chat.llm.base import LLMResponseError
 from mindmap_chat.llm.gemini import GeminiClient
 from mindmap_chat.config import validate_config
 
@@ -37,6 +38,12 @@ def get_llm_client():
 def get_conversation_manager() -> ConversationManager:
     """Return a fresh ConversationManager bound to current storage state."""
     return ConversationManager(get_llm_client(), get_storage())
+
+
+@app.exception_handler(LLMResponseError)
+async def llm_response_error_handler(request: Request, exc: LLMResponseError):
+    """The model returned nothing usable (e.g. a safety block): report it, don't 500."""
+    return JSONResponse(status_code=502, content={"detail": str(exc)})
 
 
 # ============= Request/Response Models =============

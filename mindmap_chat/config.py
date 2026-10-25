@@ -24,6 +24,15 @@ class GeminiConfig:
 
 
 @dataclass
+class DeepSeekConfig:
+    """DeepSeek API configuration (optional alternative generator)."""
+    api_key: str = os.getenv("DEEPSEEK_API_KEY", "")
+    model_name: str = "deepseek-chat"
+    temperature: float = 0.7
+    max_output_tokens: int = 1024
+
+
+@dataclass
 class EmbeddingConfig:
     """Embedding model configuration."""
     model: str = "gemini-embedding-001"  # Free, local, lightweight
@@ -44,6 +53,7 @@ class DetectionThresholds:
 class AppConfig:
     """Application-wide configuration."""
     gemini: GeminiConfig = field(default_factory=GeminiConfig)
+    deepseek: DeepSeekConfig = field(default_factory=DeepSeekConfig)
     embeddings: EmbeddingConfig = field(default_factory=EmbeddingConfig)
     thresholds: DetectionThresholds = field(default_factory=DetectionThresholds)
     auto_summarize_after_n_messages: int = 6

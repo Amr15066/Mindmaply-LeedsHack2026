@@ -7,6 +7,14 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 import json
 
+# Appended to free-text answers that hit the output-token limit, so a cut-off
+# answer is never presented as complete.
+TRUNCATION_NOTICE = "\n\n[Response truncated: reached the output-token limit]"
+
+
+class LLMResponseError(RuntimeError):
+    """The provider returned no usable content (e.g. safety block, empty candidates)."""
+
 
 class LLMClient(ABC):
     """Abstract base class for LLM clients."""
